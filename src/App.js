@@ -47,7 +47,7 @@ const App = () => {
       setAccounts(prev => [...prev, newAccount]);
       setCurrentUser(newAccount);
       setView('account-dashboard');
-      alert('✅ Account created successfully!');
+      alert('Account created successfully!');
     };
 
     return (
@@ -125,7 +125,7 @@ const App = () => {
                 onClick={() => setView('landing')}
                 className="text-gray-600 hover:text-gray-800 text-sm"
               >
-                ← Back to home
+                Back to home
               </button>
             </div>
           </div>
@@ -209,7 +209,7 @@ const App = () => {
                 onClick={() => setView('landing')}
                 className="text-gray-600 hover:text-gray-800 text-sm"
               >
-                ← Back to home
+                Back to home
               </button>
             </div>
           </div>
@@ -339,58 +339,312 @@ const App = () => {
     );
   };
 
-  const CreateProjectView = () => {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Create New Project</h1>
-          <p className="text-gray-600 mb-8">This feature is coming soon! For now, go back to dashboard.</p>
+const CreateProjectView = () => {
+  const [formData, setFormData] = useState({
+    recipientName: '',
+    recipientEmail: '',
+    birthdayMonth: '',
+    birthdayDay: '',
+    birthdayYear: '',
+    contributorEmails: Array(18).fill(''),
+    contributorNames: Array(18).fill(''),
+    personalMessage: ''
+  });
+
+  const handleCreateProject = () => {
+    if (!formData.recipientName || !formData.recipientEmail || 
+        !formData.birthdayMonth || !formData.birthdayDay || !formData.birthdayYear) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    const birthday = `${formData.birthdayYear}-${formData.birthdayMonth.padStart(2, '0')}-${formData.birthdayDay.padStart(2, '0')}`;
+    
+    const project = {
+      id: 'proj_' + Date.now(),
+      userId: currentUser.id,
+      organizerName: currentUser.name,
+      organizerEmail: currentUser.email,
+      recipientName: formData.recipientName,
+      recipientEmail: formData.recipientEmail,
+      birthday: birthday,
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    };
+
+    setProjects(prev => [...prev, project]);
+
+    const newInvitations = [];
+    formData.contributorEmails.forEach((email, index) => {
+      if (email) {
+        const invitation = {
+          id: 'inv_' + Date.now() + '_' + index,
+          projectId: project.id,
+          contributorEmail: email,
+          contributorName: formData.contributorNames[index] || 'Friend',
+          token: 'token_' + Math.random().toString(36).substr(2, 9),
+          status: 'sent',
+          letterSubmitted: false
+        };
+        newInvitations.push(invitation);
+      }
+    });
+
+    setInvitations(prev => [...prev, ...newInvitations]);
+    setCurrentProject(project);
+    alert(`Project created! ${newInvitations.length} invitations sent.`);
+    setView('account-dashboard');
+  };
+
+  const handleEmailChange = (index, value) => {
+    const newEmails = [...formData.contributorEmails];
+    newEmails[index] = value;
+    setFormData({ ...formData, contributorEmails: newEmails });
+  };
+
+  const handleNameChange = (index, value) => {
+    const newNames = [...formData.contributorNames];
+    newNames[index] = value;
+    setFormData({ ...formData, contributorNames: newNames });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => setView('account-dashboard')}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+            className="text-purple-600 hover:text-purple-800"
           >
             ← Back to Dashboard
           </button>
         </div>
       </div>
+
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center mb-8">
+          <Gift className="w-16 h-16 mx-auto mb-4 text-purple-600" />
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Letter Collection</h1>
+          <p className="text-gray-600">Gather 18 heartfelt birthday letters</p>
+        </div>
+
+        <div className="space-y-6 bg-white rounded-lg shadow-lg p-8">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Birthday Person</h2>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Name</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                value={formData.recipientName}
+                onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
+                placeholder="Sarah Johnson"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Email</label>
+              <input
+                type="email"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                value={formData.recipientEmail}
+                onChange={(e) => setFormData({ ...formData, recipientEmail: e.target.value })}
+                placeholder="sarah@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">18th Birthday Date</label>
+              <div className="grid grid-cols-3 gap-3">
+                <select
+                  className="px-3 py-2 border border-gray-300 rounded-lg"
+                  value={formData.birthdayMonth}
+                  onChange={(e) => setFormData({ ...formData, birthdayMonth: e.target.value })}
+                >
+                  <option value="">Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <select
+                  className="px-3 py-2 border border-gray-300 rounded-lg"
+                  value={formData.birthdayDay}
+                  onChange={(e) => setFormData({ ...formData, birthdayDay: e.target.value })}
+                >
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  className="px-3 py-2 border border-gray-300 rounded-lg"
+                  value={formData.birthdayYear}
+                  onChange={(e) => setFormData({ ...formData, birthdayYear: e.target.value })}
+                  placeholder="YYYY"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">18 Contributors</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto p-2">
+              {Array.from({ length: 18 }).map((_, index) => (
+                <div key={index} className="flex flex-col space-y-2 p-3 bg-gray-50 rounded-lg">
+                  <label className="text-xs font-medium text-gray-600">Person {index + 1}</label>
+                  <input
+                    type="text"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded"
+                    placeholder="Name (optional)"
+                    value={formData.contributorNames[index]}
+                    onChange={(e) => handleNameChange(index, e.target.value)}
+                  />
+                  <input
+                    type="email"
+                    className="px-3 py-2 text-sm border border-gray-300 rounded"
+                    placeholder="email@example.com"
+                    value={formData.contributorEmails[index]}
+                    onChange={(e) => handleEmailChange(index, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={handleCreateProject}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700"
+          >
+            Create Collection
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectDetailsView = () => {
+  const project = currentProject;
+  const projectInvitations = invitations.filter(inv => inv.projectId === project.id);
+  const submittedCount = projectInvitations.filter(inv => inv.letterSubmitted).length;
+  const pendingCount = projectInvitations.filter(inv => !inv.letterSubmitted).length;
+
+  const simulateLetterSubmission = (invId) => {
+    setInvitations(prev => 
+      prev.map(inv => 
+        inv.id === invId ? { ...inv, letterSubmitted: true } : inv
+      )
     );
   };
 
-  const ProjectDetailsView = () => {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Project Details</h1>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <button
             onClick={() => setView('account-dashboard')}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700"
+            className="text-purple-600 hover:text-purple-800"
           >
             ← Back to Dashboard
           </button>
         </div>
       </div>
-    );
-  };
 
-  const WriteLetterView = () => {
-    return <div>Write Letter View</div>;
-  };
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg p-8 mb-6">
+          <h1 className="text-3xl font-bold mb-2">Letter Collection for {project.recipientName}</h1>
+          <p className="text-purple-100">Birthday: {new Date(project.birthday).toLocaleDateString()}</p>
+          <p className="text-purple-100 text-sm mt-1">Recipient Email: {project.recipientEmail}</p>
+        </div>
 
-  const RecipientEmailView = () => {
-    return <div>Recipient Email View</div>;
-  };
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Letters Submitted</p>
+                <p className="text-3xl font-bold text-green-600">{submittedCount}/{projectInvitations.length}</p>
+              </div>
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+          </div>
 
-  const RecipientSignUpView = () => {
-    return <div>Recipient SignUp View</div>;
-  };
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Pending</p>
+                <p className="text-3xl font-bold text-orange-600">{pendingCount}</p>
+              </div>
+              <Clock className="w-12 h-12 text-orange-600" />
+            </div>
+          </div>
 
-  const RecipientLoginView = () => {
-    return <div>Recipient Login View</div>;
-  };
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Delivery Date</p>
+                <p className="text-lg font-bold text-purple-600">{new Date(project.birthday).toLocaleDateString()}</p>
+              </div>
+              <Calendar className="w-12 h-12 text-purple-600" />
+            </div>
+          </div>
+        </div>
 
-  const RecipientDashboard = () => {
-    return <div>Recipient Dashboard</div>;
-  };
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 bg-gray-50 border-b">
+            <h2 className="text-xl font-semibold text-gray-800">Contributor Status</h2>
+          </div>
+          <div className="divide-y">
+            {projectInvitations.map((inv, index) => (
+              <div key={inv.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{inv.contributorName || 'Contributor ' + (index + 1)}</p>
+                    <p className="text-sm text-gray-500">{inv.contributorEmail}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {inv.letterSubmitted ? (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" />
+                      Submitted
+                    </span>
+                  ) : (
+                    <>
+                      <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Pending
+                      </span>
+                      <button
+                        onClick={() => simulateLetterSubmission(inv.id)}
+                        className="text-sm text-purple-600 hover:text-purple-800 underline"
+                      >
+                        Simulate Submit
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   const LandingView = () => (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
@@ -461,21 +715,16 @@ const App = () => {
     </div>
   );
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {view === 'landing' && <LandingView />}
-      {view === 'signup' && <SignUpView />}
-      {view === 'login' && <LoginView />}
-      {view === 'account-dashboard' && <AccountDashboard />}
-      {view === 'create-project' && <CreateProjectView />}
-      {view === 'project-details' && <ProjectDetailsView />}
-      {view === 'write-letter' && <WriteLetterView />}
-      {view === 'recipient-email' && <RecipientEmailView />}
-      {view === 'recipient-signup' && <RecipientSignUpView />}
-      {view === 'recipient-login' && <RecipientLoginView />}
-      {view === 'recipient-dashboard' && <RecipientDashboard />}
-    </div>
-  );
+return (
+  <div className="min-h-screen bg-gray-50">
+    {view === 'landing' && <LandingView />}
+    {view === 'signup' && <SignUpView />}
+    {view === 'login' && <LoginView />}
+    {view === 'account-dashboard' && <AccountDashboard />}
+    {view === 'create-project' && <CreateProjectView />}
+    {view === 'project-details' && <ProjectDetailsView />}
+  </div>
+);
 };
 
 export default App;
